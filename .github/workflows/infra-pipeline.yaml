@@ -66,9 +66,21 @@ jobs:
         id: create_comment
         run: |
           echo "## Terraform Plan Output" > comment.md
-          terragrunt show -json tfplan >> comment.md
+          # Filter out only the necessary changes using jq
+          terragrunt show -json tfplan | jq -r '
+            .resource_changes[] | 
+            select(.change.actions | contains(["create", "update", "delete"])) |
+            {
+              address: .address,
+              actions: .change.actions,
+              before: .change.before,
+              after: .change.after
+            }
+          ' >> comment.md
+
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
+
           # Safely export multi-line comment
           echo "comment<<EOF" >> $GITHUB_ENV
           cat comment.md >> $GITHUB_ENV
