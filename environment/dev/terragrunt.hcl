@@ -1,5 +1,11 @@
 terraform {
   source = "../../modules/ec2"
+
+  backend "s3" {
+    bucket         = "terraform-state-keert"  # Replace with your S3 bucket name
+    key            = "dev/terraform.tfstate"         # Key for the dev environment
+    region         = "ap-south-1"                     # Change to your region
+  }
 }
 
 inputs = {

@@ -8,13 +8,21 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment to destroy'
+        required: true
+        default: 'dev'
+        options:
+          - dev
+          - prod
 
 jobs:
   terragrunt-plan:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [dev] # Define your environments here
+        environment: [dev, prod] # Add more environments as needed
     if: github.event_name == 'pull_request'  # Only run on PR events
     steps:
       - name: Checkout repository
@@ -98,7 +106,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only run apply on push to main
     strategy:
       matrix:
-        environment: [dev] # Define your environments here
+        environment: [dev, prod] # Add more environments as needed
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -137,9 +145,6 @@ jobs:
   terragrunt-destroy:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' # Only runs on manual trigger
-    strategy:
-      matrix:
-        environment: [dev]  # Define your environments here
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -169,8 +174,8 @@ jobs:
 
       - name: Terraform Init
         run: terragrunt init
-        working-directory: environment/${{ matrix.environment }}
+        working-directory: environment/${{ github.event.inputs.environment }}
 
       - name: Terraform Destroy
         run: terragrunt destroy -auto-approve
-        working-directory: environment/${{ matrix.environment }}
+        working-directory: environment/${{ github.event.inputs.environment }}
