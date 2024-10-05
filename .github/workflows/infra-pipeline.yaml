@@ -6,7 +6,7 @@ on:
       - main
   push:
     branches:
-      - '*'
+      - main
 
 jobs:
   terragrunt-plan:
@@ -29,7 +29,6 @@ jobs:
           echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -57,18 +56,19 @@ jobs:
 
       - name: Generate cost estimate
         env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }} # Set the API key here
         run: |
-          infracost breakdown --path=environment/${{ matrix.environment }} --format=json > infracost-output.json
-          echo "::set-output name=cost::$(jq '.totalMonthlyCost' infracost-output.json)"
+          infracost breakdown --path=environment/${{ matrix.environment }}/tfplan --format=json > infracost-output.json
+          # Extract the total monthly cost and save it to an environment variable
+          echo "COST=$(jq -r '.totalMonthlyCost' infracost-output.json)" >> $GITHUB_ENV
 
       - name: Create cost comment
         id: create_comment
         run: |
-          echo "Estimated monthly cost: ${{ steps.plan.outputs.cost }}"
-          if [ -n "${{ steps.plan.outputs.cost }}" ]; then
+          echo "Estimated monthly cost: $COST"
+          if [ -n "$COST" ]; then
             echo "## Cloud Cost Estimate" >> comment.md
-            echo "- Estimated monthly cost: ${{ steps.plan.outputs.cost }}" >> comment.md
+            echo "- Estimated monthly cost: $COST" >> comment.md
           fi
 
       - name: Upload cost comment
@@ -110,7 +110,6 @@ jobs:
           echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
