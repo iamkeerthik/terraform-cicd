@@ -1,0 +1,23 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+
+# Terragrunt files
+*.terragrunt-cache/
+*.tfvars
+
+# AWS Credentials (if you don't want to accidentally commit them)
+.aws/
+*.pem
+
+# IDE/Editor specific files
+*.swp
+*.swo
+.idea/
+.vscode/
+.DS_Store
+
+# Log files
+*.log
