@@ -66,9 +66,18 @@ jobs:
         id: create_comment
         run: |
           echo "## Terraform Plan Output" > comment.md
-          terragrunt show -json tfplan | jq '.resource_changes[] | {address: .address, action: .change.actions}' >> comment.md  
+          
+          # Check if tfplan file exists and is not empty
+          if [ -s tfplan ]; then
+            # Process the tfplan and extract necessary details
+            terragrunt show -json tfplan | jq -r '.resource_changes[] | "Address: \(.address)\nAction: \(.change.actions | join(", "))\n"' >> comment.md
+          else
+            echo "No changes detected or tfplan file is empty." >> comment.md
+          fi
+          
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
+
           # Safely export multi-line comment
           echo "comment<<EOF" >> $GITHUB_ENV
           cat comment.md >> $GITHUB_ENV
