@@ -81,8 +81,8 @@ jobs:
           script: |
             const fs = require('fs');
             const comment = fs.readFileSync('comment.md', 'utf8');
-            const context = require('@actions/github').context;
-            const { owner, repo, number } = context.issue;
+            const githubContext = require('@actions/github').context;  // Rename context to githubContext
+            const { owner, repo, number } = githubContext.issue;  // Use the renamed variable
 
             github.issues.createComment({
               owner,
