@@ -62,6 +62,24 @@ jobs:
           # Extract the total monthly cost and save it to an environment variable
           echo "COST=$(jq -r '.totalMonthlyCost' infracost-output.json)" >> $GITHUB_ENV
 
+      - name: Generate cost estimate
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }} # Set the API key here
+        run: |
+          infracost breakdown --path=environment/${{ matrix.environment }}/tfplan --format=json > infracost-output.json
+
+          # Check if infracost-output.json was created
+          if [ ! -f infracost-output.json ]; then
+            echo "Infracost output not found!"
+            exit 1
+          fi
+
+          # Log the Infracost output for debugging
+          cat infracost-output.json
+
+          # Extract the total monthly cost and save it to an environment variable
+          echo "COST=$(jq -r '.totalMonthlyCost' infracost-output.json)" >> $GITHUB_ENV
+
       - name: Create combined comment
         id: create_comment
         run: |
@@ -71,16 +89,12 @@ jobs:
           echo "- Estimated monthly cost: $COST" >> comment.md
           echo "\n### Cost Details" >> comment.md
           echo "\`\`\`json" >> comment.md
+
+          # Add the Infracost output to the comment
           cat infracost-output.json >> comment.md
+
           echo "\`\`\`" >> comment.md
         working-directory: environment/${{ matrix.environment }}  # Ensure you're in the correct directory
-
-      - name: Create PR Comment
-        uses: KeisukeYamashita/create-comment@v1
-        with:
-          token: ${{ secrets.TERRAFORM_GITHUB_TOKEN }}  # GitHub token to authenticate
-          number: ${{ github.event.pull_request.number }}  # The PR number
-          body: ${{ steps.create_comment.outputs.body }}  # The comment content from the previous step
 
 
   terragrunt-apply:
