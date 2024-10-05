@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [dev, prod] # Define your environments here
+        environment: [dev] # Define your environments here
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        environment: [dev, prod] # Define your environments here
+        environment: [dev] # Define your environments here
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
