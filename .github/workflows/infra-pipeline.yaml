@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [dev, prod] # Add more environments as needed
+        environment: [dev] # Add more environments as needed
     if: github.event_name == 'pull_request'  # Only run on PR events
     steps:
       - name: Checkout repository
@@ -106,7 +106,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only run apply on push to main
     strategy:
       matrix:
-        environment: [dev, prod] # Add more environments as needed
+        environment: [dev] # Add more environments as needed
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
