@@ -73,10 +73,9 @@ jobs:
           echo "\`\`\`json" >> comment.md
           echo "$COST_DETAILS" >> comment.md
           echo "\`\`\`" >> comment.md
-        working-directory: environment/${{ matrix.environment }}  # Ensure to set the correct working directory
+        working-directory: environment/${{ matrix.environment }}
 
-      - name: Upload cost comment
-        if: steps.create_comment.outputs.cost
+      - name: Upload combined comment
         uses: actions/github-script@v5
         with:
           script: |
