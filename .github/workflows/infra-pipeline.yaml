@@ -69,6 +69,8 @@ jobs:
           terragrunt show -json tfplan >> comment.md
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
+          comment=$(cat comment.md)
+          echo "comment=$comment" >> $GITHUB_ENV
         working-directory: environment/${{ matrix.environment }}  # Ensure you're in the correct directory
 
       - name: Create PR Comment
@@ -76,7 +78,7 @@ jobs:
         with:
           token: ${{ secrets.TERRAFORM_GITHUB_TOKEN }}  # GitHub token to authenticate
           number: ${{ github.event.pull_request.number }}  # The PR number
-          body: ${{ steps.create_comment.outputs.body }}  # The comment content from the previous step
+          body: ${{ env.comment }}  # The comment content from the previous step
 
 
   terragrunt-apply:
