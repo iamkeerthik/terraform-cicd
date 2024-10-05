@@ -22,10 +22,6 @@ variable "region" {
   type        = string
 }
 
-variable "aws_profile" {
-  description = "AWS CLI profile to use"
-  type        = string
-}
 variable "security_groups" {
   description = "List of security group definitions"
   type = list(object({

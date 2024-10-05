@@ -4,7 +4,6 @@ terraform {
 
 inputs = {
   region         = "ap-south-1"
-  aws_profile    = "keerthik"
   vpc_id         = "vpc-0e48b2d3d483444ec"
   ami_id         = "ami-0522ab6e1ddcc7055"
   instance_type  = "t3a.small"
