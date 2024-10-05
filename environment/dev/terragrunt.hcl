@@ -2,6 +2,7 @@ terraform {
   source = "../../modules/ec2"
 }
 
+/*
 inputs = {
   region         = "ap-south-1"
   vpc_id         = "vpc-0e48b2d3d483444ec"
@@ -78,3 +79,4 @@ inputs = {
     }
   ]
 }
+*/
