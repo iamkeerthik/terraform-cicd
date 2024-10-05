@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         environment: [dev] # Define your environments here
+    if: github.event_name == 'pull_request'  # Only run on PR events
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,8 +68,13 @@ jobs:
         run: |
           echo "## Terraform Plan Output" > comment.md
           
-          # Process the tfplan and extract necessary details
-          terragrunt show -json tfplan | jq -r '.resource_changes[] | "Address: \(.address)\nAction: \(.change.actions | join(", "))\n"' >> comment.md
+          # Check if tfplan file exists and is not empty
+          if [ -s tfplan ]; then
+            # Process the tfplan and extract necessary details
+            terragrunt show -json tfplan | jq -r '.resource_changes[] | "Address: \(.address)\nAction: \(.change.actions | join(", "))\n"' >> comment.md
+          else
+            echo "No changes detected or tfplan file is empty." >> comment.md
+          fi
           
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
@@ -89,7 +95,7 @@ jobs:
   terragrunt-apply:
     runs-on: ubuntu-latest
     needs: terragrunt-plan
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only run apply on push to main
     strategy:
       matrix:
         environment: [dev] # Define your environments here
