@@ -66,26 +66,9 @@ jobs:
         id: create_comment
         run: |
           echo "## Terraform Plan Output" > comment.md
-
-          # Safely parse JSON and handle errors
-          if jq -e . raw_plan_output.json > /dev/null; then
-            jq -r '
-              .resource_changes[]? |
-              select(.change.actions | length > 0) |
-              {
-                address: .address,
-                actions: .change.actions,
-                before: .change.before | if . == null then "N/A" else . end,
-                after: .change.after | if . == null then "N/A" else . end
-              }
-            ' raw_plan_output.json >> comment.md
-          else
-            echo "Invalid JSON format in raw_plan_output.json" >> comment.md
-          fi
-
+          terragrunt show -json tfplan >> comment.md
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
-
           # Safely export multi-line comment
           echo "comment<<EOF" >> $GITHUB_ENV
           cat comment.md >> $GITHUB_ENV
