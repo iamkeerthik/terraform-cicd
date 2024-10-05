@@ -65,8 +65,8 @@ jobs:
       - name: Create combined comment
         id: create_comment
         run: |
-          # echo "## Terraform Plan Output" > comment.md
-          # terragrunt show -json tfplan >> comment.md
+          echo "## Terraform Plan Output" > comment.md
+          terragrunt show -json tfplan >> comment.md
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
           comment=$(cat comment.md)
