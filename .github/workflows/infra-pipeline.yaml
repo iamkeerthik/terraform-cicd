@@ -71,26 +71,18 @@ jobs:
           echo "- Estimated monthly cost: $COST" >> comment.md
           echo "\n### Cost Details" >> comment.md
           echo "\`\`\`json" >> comment.md
-          echo "$COST_DETAILS" >> comment.md
+          cat infracost-output.json >> comment.md
           echo "\`\`\`" >> comment.md
         working-directory: environment/${{ matrix.environment }}  # Ensure you're in the correct directory
 
-      - name: Upload combined comment
-        uses: actions/github-script@v5
+      - name: Create PR Comment
+        uses: KeisukeYamashita/create-comment@v1
         with:
-          script: |
-            const fs = require('fs');
-            const comment = fs.readFileSync('environment/${{ matrix.environment }}/comment.md', 'utf8');
-            const { context: githubContext } = require('@actions/github');  // Renaming to avoid conflict
-            
-            const { owner, repo, number } = githubContext.issue;
+          token: ${{ secrets.TERRAFORM_GITHUB_TOKEN }}  # GitHub token to authenticate
+          number: ${{ github.event.pull_request.number }}  # The PR number
+          body: ${{ steps.create_comment.outputs.body }}  # The comment content from the previous step
 
-            await github.issues.createComment({
-              owner,
-              repo,
-              issue_number: number,
-              body: comment,
-            });
+
   terragrunt-apply:
     runs-on: ubuntu-latest
     needs: terragrunt-plan
