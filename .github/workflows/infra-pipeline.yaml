@@ -73,6 +73,7 @@ jobs:
           echo "\`\`\`json" >> comment.md
           echo "$COST_DETAILS" >> comment.md
           echo "\`\`\`" >> comment.md
+        working-directory: environment/${{ matrix.environment }}  # Ensure to set the correct working directory
 
       - name: Upload cost comment
         if: steps.create_comment.outputs.cost
