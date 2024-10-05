@@ -13,13 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [dev, prod] # Define your environments here
+        environment: [dev] # Define your environments here
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
       - name: Set up AWS credentials
         run: |
+          mkdir -p ~/.aws
           echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
@@ -49,49 +55,56 @@ jobs:
         working-directory: environment/${{ matrix.environment }}
 
       - name: Generate cost estimate
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }} # Set the API key here
         run: |
-          infracost breakdown --path=environment/${{ matrix.environment }} --format=json > infracost-output.json
-          echo "::set-output name=cost::$(jq '.totalMonthlyCost' infracost-output.json)"
+          infracost breakdown --path=environment/${{ matrix.environment }}/tfplan --format=json > infracost-output.json
+          # Extract the total monthly cost and save it to an environment variable
+          echo "COST=$(jq -r '.totalMonthlyCost' infracost-output.json)" >> $GITHUB_ENV
 
-      - name: Create cost comment
+      - name: Create combined comment
         id: create_comment
         run: |
-          echo "Estimated monthly cost: ${{ steps.plan.outputs.cost }}"
-          if [ -n "${{ steps.plan.outputs.cost }}" ]; then
-            echo "## Cloud Cost Estimate" >> comment.md
-            echo "- Estimated monthly cost: ${{ steps.plan.outputs.cost }}" >> comment.md
-          fi
+          echo "## Terraform Plan Output" > comment.md
+          
+          # Process the tfplan and extract necessary details
+          terragrunt show -json tfplan | jq -r '.resource_changes[] | "Address: \(.address)\nAction: \(.change.actions | join(", "))\n"' >> comment.md
+          
+          echo "\n## Cloud Cost Estimate" >> comment.md
+          echo "- Estimated monthly cost: $COST" >> comment.md
 
-      - name: Upload cost comment
-        if: steps.create_comment.outputs.cost
-        uses: actions/github-script@v5
+          # Safely export multi-line comment
+          echo "comment<<EOF" >> $GITHUB_ENV
+          cat comment.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        working-directory: environment/${{ matrix.environment }}
+
+      - name: Create PR Comment
+        uses: KeisukeYamashita/create-comment@v1
         with:
-          script: |
-            const fs = require('fs');
-            const comment = fs.readFileSync('comment.md', 'utf8');
-            const context = require('@actions/github').context;
-            const { owner, repo, number } = context.issue;
-
-            github.issues.createComment({
-              owner,
-              repo,
-              issue_number: number,
-              body: comment,
-            });
-
+          token: ${{ secrets.TERRAFORM_GITHUB_TOKEN }}  # GitHub token to authenticate
+          number: ${{ github.event.pull_request.number }}  # The PR number
+          comment: ${{ env.comment }}  # The comment content from the previous step
+          
   terragrunt-apply:
     runs-on: ubuntu-latest
     needs: terragrunt-plan
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        environment: [dev, prod] # Define your environments here
+        environment: [dev] # Define your environments here
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
       - name: Set up AWS credentials
         run: |
+          mkdir -p ~/.aws
           echo "[default]" > ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
