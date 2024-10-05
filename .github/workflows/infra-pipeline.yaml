@@ -69,18 +69,19 @@ jobs:
           terragrunt show -json tfplan >> comment.md
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
-          comment=$(cat comment.md)
-          echo "comment=$comment" >> $GITHUB_ENV
-        working-directory: environment/${{ matrix.environment }}  # Ensure you're in the correct directory
+          # Safely export multi-line comment
+          echo "comment<<EOF" >> $GITHUB_ENV
+          cat comment.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        working-directory: environment/${{ matrix.environment }}
 
       - name: Create PR Comment
         uses: KeisukeYamashita/create-comment@v1
         with:
           token: ${{ secrets.TERRAFORM_GITHUB_TOKEN }}  # GitHub token to authenticate
           number: ${{ github.event.pull_request.number }}  # The PR number
-          body: ${{ env.comment }}  # The comment content from the previous step
-
-
+          comment: ${{ env.comment }}  # The comment content from the previous step
+          
   terragrunt-apply:
     runs-on: ubuntu-latest
     needs: terragrunt-plan
