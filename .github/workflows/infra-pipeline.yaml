@@ -62,14 +62,17 @@ jobs:
           # Extract the total monthly cost and save it to an environment variable
           echo "COST=$(jq -r '.totalMonthlyCost' infracost-output.json)" >> $GITHUB_ENV
 
-      - name: Create cost comment
+      - name: Create combined comment
         id: create_comment
         run: |
-          echo "Estimated monthly cost: $COST"
-          if [ -n "$COST" ]; then
-            echo "## Cloud Cost Estimate" >> comment.md
-            echo "- Estimated monthly cost: $COST" >> comment.md
-          fi
+          echo "## Terraform Plan Output" > comment.md
+          terragrunt show -json tfplan >> comment.md
+          echo "\n## Cloud Cost Estimate" >> comment.md
+          echo "- Estimated monthly cost: $COST" >> comment.md
+          echo "\n### Cost Details" >> comment.md
+          echo "\`\`\`json" >> comment.md
+          echo "$COST_DETAILS" >> comment.md
+          echo "\`\`\`" >> comment.md
 
       - name: Upload cost comment
         if: steps.create_comment.outputs.cost
