@@ -94,7 +94,6 @@ jobs:
           
   terragrunt-apply:
     runs-on: ubuntu-latest
-    needs: terragrunt-plan
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only run apply on push to main
     strategy:
       matrix:
