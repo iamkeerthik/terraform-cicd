@@ -66,9 +66,10 @@ jobs:
         id: create_comment
         run: |
           echo "## Terraform Plan Output" > comment.md
-          # Filter out only the necessary changes using jq
+
+          # Safely parse JSON and handle errors
           terragrunt show -json tfplan | jq -r '
-            .resource_changes[] | 
+            .resource_changes[]? | 
             select(.change.actions | contains(["create", "update", "delete"])) |
             {
               address: .address,
@@ -76,7 +77,7 @@ jobs:
               before: .change.before,
               after: .change.after
             }
-          ' >> comment.md
+          ' >> comment.md || echo "Error processing Terraform plan JSON." >> comment.md
 
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
