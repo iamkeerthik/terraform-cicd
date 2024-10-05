@@ -66,14 +66,21 @@ jobs:
         id: create_comment
         run: |
           echo "## Terraform Plan Output" > comment.md
-          terragrunt show -json tfplan >> comment.md
+          terragrunt plan -out=tfplan
+          terragrunt show -json tfplan | jq . >> comment.md  # Format the plan output with jq
           echo "\n## Cloud Cost Estimate" >> comment.md
           echo "- Estimated monthly cost: $COST" >> comment.md
+          # Add collapsible section for the formatted plan
+          echo "<details><summary>Click to expand Terragrunt Plan Output</summary>" >> comment.md
+          echo "\`\`\`json" >> comment.md
+          cat comment.md >> comment.md
+          echo "\`\`\`" >> comment.md
+          echo "</details>" >> comment.md
           # Safely export multi-line comment
           echo "comment<<EOF" >> $GITHUB_ENV
           cat comment.md >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-        working-directory: environment/${{ matrix.environment }}
+        working-directory: environment/${{ matrix.environment }}  
 
       - name: Create PR Comment
         uses: KeisukeYamashita/create-comment@v1
